@@ -1,10 +1,48 @@
 import networkx as nx
+import matplotlib.pyplot as plt
+import dzcnapy_plotlib as dzcnapy
+import csv
 
-G = nx.Graph([("A", "eggs"),])
-G.add_node("spinach") #add a single node
-G.add_node("Hg") #add a single node by mistake
-G.add_nodes_from(["folates", "asparagus", "liver"]) #Add a list of nodes
-G.add_edge("spinach", "folates") # Add one edge, both ends exist
-G.add_edge("spinach", "heating oil") # Add one edge by mistake
-G.add_edge("liver", "Se") # Add one edge, one end does not exist
-G.add_edges_from([("folates", "liver"), ("folates", "asparagus")])
+with open("nutrients.csv") as infile:
+    csv_reader = csv.reader(infile)
+    G = nx.Graph(csv_reader)
+print(G.nodes())
+
+loops = list(G.selfloop_edges())
+G.remove_edges_from(loops)
+print(loops)
+
+mapping = {node: node.title() for node in G if isinstance(node, str)}
+nx.relabel_nodes(G, mapping, copy=False)
+print(G.nodes())
+
+nutrients = set(("B12", "Zn", "D", "B6", "A", "Se", "Cu", "Folates",
+                "Ca", "Mn", "Thiamin", "Riboflavin", "C", "E", "Niacin"))
+nutrients_dict = {node: (node in nutrients) for node in G}
+nx.set_node_attributes(G, nutrients_dict, "nutrient")
+
+#prepare for drawing
+colors = ["yellow" if n[1]["nutrient"] else "pink" for n in G.nodes(data=True)]
+dzcnapy.medium_attrs["node_color"] = colors
+
+#Draw dour layouts in four subplots
+_, plt = plt.subplots(2, 2)
+
+subplots = plt.reshape(1, 4)[0]
+layouts = (nx.random_layout, nx.circular_layout, nx.spring_layout, nx.spectral_layout)
+titles = ("Random", "Circular", "Force-Directed", "Spectral")
+for plot, layout, title in zip(subplots, layouts, titles):
+    pos = layout(G)
+    nx.draw_networkx(G, pos=pos, ax=plot, with_labels=False, **dzcnapy.medium_attrs)
+    plot.set_title(title)
+    dzcnapy.set_extent(pos, plot)
+
+dzcnapy.plot("nutrients")
+
+from netwirkx.drawing.nx_agraph import graphviz_layout
+
+_, plot = plt.subplots()
+pos = graphviz_layout(G)
+nx.draw_networkx(G, pos, **dzcnapy.attrs)
+dzcnapy.set_extent(pos, plot)
+dzcnapy.plot("nutrients-graphviz")
