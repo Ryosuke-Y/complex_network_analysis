@@ -61,4 +61,4 @@ print("{} nodes, {} edges".format(len(G), nx.number_of_edges(G)))
 nx.write_graphml(G, "cna.graphml")
 
 top_indegree = sorted(dict(G.in_degree()).items(), reverse=True, key=itemgetter(1))[:100]
-print("\n".join(map(lambda t: "{} {}".format(*reversed(t)), topindegree)))
+print("\n".join(map(lambda t: "{} {}".format(*reversed(t)), top_indegree)))
